@@ -1,0 +1,38 @@
+// Hàm calculate nhận vào 3 tham số: số thứ nhất, toán tử, số thứ hai
+function calculate(num1, operator, num2) {
+  
+    if (typeof num1 !== 'number' || typeof num2 !== 'number' || isNaN(num1) || isNaN(num2)) {
+        return "Lỗi: Input không phải số";
+    }
+
+   
+    if ((operator === "/" || operator === "%") && num2 === 0) {
+        return "Lỗi: Không thể chia cho 0";
+    }
+
+   
+    switch (operator) {
+        case "+":
+            return num1 + num2;
+        case "-":
+            return num1 - num2;
+        case "*":
+            return num1 * num2;
+        case "/":
+            return num1 / num2;
+        case "%":
+            return num1 % num2;
+        case "**":
+            return num1 ** num2;
+        default:
+            // Xử lý edge case: Operator không hợp lệ
+            return `Lỗi: Operator '${operator}' không hợp lệ`;
+    }
+}
+
+
+console.log(calculate(10, "+", 5));    // Mong đợi: 15
+console.log(calculate(10, "/", 0));    // Mong đợi: "Lỗi: Không thể chia cho 0"
+console.log(calculate(10, "^", 5));    // Mong đợi: "Lỗi: Operator '^' không hợp lệ"
+console.log(calculate("abc", "+", 5)); // Mong đợi: "Lỗi: Input không phải số"
+console.log(calculate(2, "**", 10));   // Mong đợi: 1024
