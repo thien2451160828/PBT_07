@@ -103,3 +103,121 @@ var html = `
     <span>Giá: ${price}đ</span>
 </div>
 `;
+
+### Câu C1 (10đ) — Debug JavaScript
+
+Dưới đây là 6 lỗi được tìm thấy trong đoạn code, kèm theo giải thích và cách sửa:
+
+1. **Lỗi toán tử so sánh (Nghiêm trọng):**
+   * **Đoạn code lỗi:** `if (giaSauGiam = 0)`
+   * **Giải thích:** Dấu `=` là phép gán giá trị, không phải phép so sánh. Câu lệnh này sẽ gán `giaSauGiam` thành `0`, sau đó đánh giá `0` là Falsy, dẫn đến việc dòng `console.log("Sản phẩm miễn phí!")` không bao giờ được chạy.
+   * **Cách sửa:** Đổi thành `if (giaSauGiam === 0)`
+
+2. **Lỗi Type Coercion (Truyền sai kiểu dữ liệu):**
+   * **Đoạn code lỗi:** `tinhGiaGiamGia("100000", 20)`
+   * **Giải thích:** Truyền chuỗi `"100000"` thay vì số `100000`. Dù JavaScript có khả năng tự ép kiểu trong phép nhân/trừ, nhưng đây là một thói quen code rất nguy hiểm và dễ gây bug.
+   * **Cách sửa:** Truyền vào số nguyên: `tinhGiaGiamGia(100000, 20)`
+
+3. **Lỗi lạm dụng `var` (Scope issue):**
+   * **Đoạn code lỗi:** `var giamGia = ...`
+   * **Giải thích:** Từ khóa `var` là chuẩn cũ, không có Block Scope. Việc dùng lẫn lộn `var` và `let` trong cùng một hàm làm code thiếu đồng bộ.
+   * **Cách sửa:** Đổi thành `const giamGia = ...` (vì biến này không bị gán lại).
+
+4. **Lỗi logic khi validate phần trăm giảm:**
+   * **Đoạn code lỗi:** Nếu nhập `tinhGiaGiamGia(50000, 110)`, hàm trả về chuỗi `"Phần trăm giảm không hợp lệ"`. Sau đó biến `gia2` nhận chuỗi này và in ra màn hình.
+   * **Giải thích:** Hàm tính toán nên ném ra lỗi (throw Error) hoặc trả về `null/undefined` khi input sai, thay vì trả về một câu text string làm hỏng logic tính toán.
+   * **Cách sửa:** Dùng `throw new Error("Phần trăm giảm không hợp lệ")` hoặc `return null`.
+
+5. **Lỗi thiếu Validate dữ liệu đầu vào (Edge Case):**
+   * **Đoạn code lỗi:** Không có đoạn kiểm tra `typeof giaBan` là số.
+   * **Giải thích:** Nếu vô tình gọi hàm `tinhGiaGiamGia("Chữ", 20)`, hàm sẽ thực hiện tính toán `giaBan - giamGia` và trả ra `NaN`.
+   * **Cách sửa:** Thêm `if (typeof giaBan !== 'number' || typeof phanTramGiam !== 'number') return "Lỗi input";` vào đầu hàm.
+
+6. **Lỗi "Ẩn" — Scope của `var` trong vòng lặp (Cực kỳ phổ biến):**
+   * **Đoạn code lỗi:** `for (var i = 0; i < 5; i++) { setTimeout(function() { console.log("Item " + i) }, 1000) }`
+   * **Giải thích:** Do `var` có Function Scope (không bị giới hạn bởi cặp ngoặc `{}` của lệnh for). Vòng lặp for chạy nhanh hơn `setTimeout` rất nhiều, nó chạy một mạch từ 0 đến 5. Khi các hàm `setTimeout` bắt đầu kích hoạt sau 1 giây, biến `i` lúc này đã là `5`. Do đó, nó in ra `Item 5` liên tục 5 lần.
+   * **Cách sửa:** Thay `var i = 0` bằng `let i = 0`. Vì `let` có Block Scope, mỗi lần lặp nó sẽ đóng gói và "nhớ" một biến `i` độc lập cho từng cái `setTimeout`.
+
+// Input: Danh sách món ăn
+const items = [
+    { name: "Phở bò", qty: 2, price: 65000 },
+    { name: "Trà đá", qty: 3, price: 5000 },
+    { name: "Bún chả", qty: 1, price: 55000 }
+];
+
+// Hàm format tiền tệ (thêm chữ k hoặc đ)
+function formatMoney(amount, useK = false) {
+    if (useK) return (amount / 1000) + "k";
+    return amount.toLocaleString("vi-VN") + "đ";
+}
+
+// 1. Tính tổng hóa đơn thô
+let rawTotal = 0;
+for (let i = 0; i < items.length; i++) {
+    rawTotal += items[i].price * items[i].qty;
+}
+
+// 2. Xét quy tắc giảm giá
+let discountPercent = 0;
+
+// Giảm giá theo tổng tiền
+if (rawTotal > 1000000) {
+    discountPercent += 15;
+} else if (rawTotal > 500000) {
+    discountPercent += 10;
+}
+
+// Kiểm tra ngày thứ 3 (Wednesday = 3 trong hàm getDay())
+const today = new Date();
+if (today.getDay() === 3) {
+    discountPercent += 5;
+}
+
+// 3. Tính toán các khoản phụ phí và tổng cuối
+const discountAmount = rawTotal * (discountPercent / 100);
+const totalAfterDiscount = rawTotal - discountAmount;
+
+const vatAmount = totalAfterDiscount * 0.08;
+const tipAmount = totalAfterDiscount * 0.05;
+const finalTotal = totalAfterDiscount + vatAmount + tipAmount;
+
+// =========================================
+// IN HÓA ĐƠN VỚI ĐỊNH DẠNG BẢNG ASCII
+// =========================================
+
+console.log("╔══════════════════════════════════════╗");
+console.log("║           HÓA ĐƠN NHÀ HÀNG           ║");
+console.log("╠══════════════════════════════════════╣");
+
+// In từng món ăn
+for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const stt = `${i + 1}.`;
+    const name = item.name.padEnd(12, " ");
+    const qty = `x${item.qty}`.padEnd(5, " ");
+    const price = `@${formatMoney(item.price, true)}`.padEnd(6, " ");
+    const totalItem = `= ${formatMoney(item.price * item.qty, true)}`.padEnd(6, " ");
+    
+    // Ghép dòng và căn lề phải cho khít
+    let rowText = `${stt} ${name} ${qty} ${price} ${totalItem}`;
+    console.log(`║ ${rowText.padEnd(36, " ")} ║`);
+}
+
+console.log("╠══════════════════════════════════════╣");
+
+// Hàm phụ để căn lề 2 bên cho các dòng tổng
+function printRow(label, value) {
+    const leftPad = label.padEnd(25, " ");
+    const rightPad = value.padEnd(11, " ");
+    console.log(`║ ${leftPad} ${rightPad} ║`);
+}
+
+printRow("Tổng cộng:", formatMoney(rawTotal));
+printRow(`Giảm giá (${discountPercent}%):`, formatMoney(discountAmount));
+printRow("VAT (8%):", formatMoney(vatAmount));
+printRow("Tip (5%):", formatMoney(tipAmount));
+
+console.log("╠══════════════════════════════════════╣");
+printRow("THANH TOÁN:", formatMoney(finalTotal));
+console.log("╚══════════════════════════════════════╝");
+
